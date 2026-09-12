@@ -1,0 +1,216 @@
+// Scorbot controller protocol: the contract between the ROS 2 hardware interface on
+// the Raspberry Pi and the ESP32 motor controller firmware.
+//
+// Both sides use nanopb-generated code (see scorbot.options for the fixed array and
+// string sizes that make every message statically allocated). Transport framing is
+// defined in docs/protocol.md: on serial each Envelope is COBS-encoded with a trailing
+// CRC-16 and a 0x00 delimiter; on UDP one Envelope per datagram.
+//
+// Units are SI in joint space: radians, radians per second, amperes. Joint order is
+// the order of GetInfoResponse.joint_names and must match the robot description.
+//
+// Rules for changing this file: only ever add fields with new numbers; never renumber
+// or reuse a field number; bump PROTOCOL_MINOR for additions, PROTOCOL_MAJOR for
+// anything that changes the meaning of an existing field.
+
+syntax = "proto3";
+
+package scorbot.v1;
+
+// ---------------------------------------------------------------------------------
+// Enumerations
+// ---------------------------------------------------------------------------------
+
+// How the controller should interpret a joint's setpoint in JointCommand.
+enum ControlMode {
+  CONTROL_MODE_NONE = 0;      // hold the current position under local control
+  CONTROL_MODE_POSITION = 1;  // track JointCommand.position (rad)
+  CONTROL_MODE_VELOCITY = 2;  // track JointCommand.velocity (rad/s)
+}
+
+// Controller state machine (docs/protocol.md, "State machine").
+enum SystemState {
+  SYSTEM_STATE_BOOT = 0;     // self-test in progress, motors braked
+  SYSTEM_STATE_UNHOMED = 1;  // idle, positions unknown, motors braked
+  SYSTEM_STATE_HOMING = 2;   // homing sequence running
+  SYSTEM_STATE_READY = 3;    // homed, motors braked, waiting for Enable
+  SYSTEM_STATE_ACTIVE = 4;   // drives enabled, JointCommand accepted, watchdog armed
+  SYSTEM_STATE_FAULT = 5;    // latched fault, motors braked, needs ClearFault
+}
+
+enum FaultCode {
+  FAULT_NONE = 0;
+  FAULT_WATCHDOG = 1;        // no JointCommand within watchdog_ms while ACTIVE
+  FAULT_OVERCURRENT = 2;     // motor current above current_limit_a
+  FAULT_LIMIT_SWITCH = 3;    // limit switch hit while ACTIVE
+  FAULT_SOFT_LIMIT = 4;      // position ran past a soft limit
+  FAULT_STALL = 5;           // commanded motion with no encoder movement
+  FAULT_HOMING_TIMEOUT = 6;  // homing did not find the switch in time
+  FAULT_ENCODER = 7;         // encoder read failure / implausible counts
+  FAULT_DRIVER = 8;          // motor driver / I2C failure
+  FAULT_INTERNAL = 9;        // firmware assertion
+}
+
+enum Result {
+  RESULT_OK = 0;
+  RESULT_INVALID_STATE = 1;     // request not allowed in the current SystemState
+  RESULT_INVALID_ARGUMENT = 2;  // bad joint index, out-of-range value, etc.
+  RESULT_BUSY = 3;              // another operation (e.g. homing) is in progress
+  RESULT_UNSUPPORTED = 4;       // request type unknown to this firmware
+  RESULT_INTERNAL_ERROR = 5;
+}
+
+// ---------------------------------------------------------------------------------
+// Streaming messages (100 Hz)
+// ---------------------------------------------------------------------------------
+
+// Pi -> controller. One entry per joint, in GetInfo joint order. Ignored unless the
+// controller is ACTIVE; every accepted command re-arms the watchdog.
+message JointCommand {
+  repeated ControlMode mode = 1;
+  repeated float position = 2;  // rad, used when mode == POSITION
+  repeated float velocity = 3;  // rad/s, used when mode == VELOCITY
+}
+
+message JointFlags {
+  bool homed = 1;
+  bool limit_switch = 2;   // switch currently pressed
+  bool at_soft_limit = 3;  // setpoint is being clamped by a soft limit
+  bool fault = 4;          // this joint raised the current fault
+}
+
+// Controller -> Pi, sent at a fixed rate from a hardware timer regardless of link state.
+message JointState {
+  SystemState state = 1;
+  FaultCode fault = 2;
+  repeated float position = 3;  // rad
+  repeated float velocity = 4;  // rad/s
+  repeated float current = 5;   // A, signed with the joint direction
+  repeated JointFlags flags = 6;
+  uint32 commands_received = 7;       // rolling counter of accepted JointCommands
+  uint32 commands_ignored = 8;        // rolling counter of JointCommands dropped (not ACTIVE)
+  uint32 control_loop_period_us = 9;  // measured inner loop period
+  uint32 boot_count = 10;             // same counter as GetInfo; a change means the controller rebooted
+}
+
+// ---------------------------------------------------------------------------------
+// Requests and responses (on demand, one in flight at a time)
+// ---------------------------------------------------------------------------------
+
+// Per-joint calibration. Pushed by the Pi at configure time from the robot description
+// and stored by the controller in non-volatile memory. Nothing robot-specific is
+// compiled into the firmware.
+message JointCalibration {
+  uint32 index = 1;                 // joint index in GetInfo order
+  int32 counts_per_motor_rev = 2;   // encoder counts per motor revolution (x4 quadrature)
+  float gear_ratio = 3;             // motor revolutions per joint revolution
+  float home_offset_rad = 4;        // joint angle at the limit switch
+  int32 home_direction = 5;         // -1 or +1: direction to search for the switch
+  float soft_limit_min_rad = 6;
+  float soft_limit_max_rad = 7;
+  float max_velocity_rad_s = 8;
+  float max_accel_rad_s2 = 9;
+  float current_limit_a = 10;
+  bool invert = 11;                 // joint positive direction is opposite to the motor's: flips
+                                    // the motor drive and the reported sign together
+  bool encoder_invert = 12;         // the encoder counts down when the motor is driven positive
+                                    // (P0/P1 phases swapped: the ER-4u and ER-Vplus manuals disagree
+                                    // on the PC510 pad order); the firmware negates the raw count
+}
+
+message GetInfoRequest {}
+
+message GetInfoResponse {
+  uint32 protocol_major = 1;
+  uint32 protocol_minor = 2;
+  string firmware_version = 3;      // e.g. "0.1.0+abc123"
+  string robot_type = 4;            // "er_v" | "er_4pc" | "unset"
+  repeated string joint_names = 5;  // joint order for every repeated field
+  uint32 boot_count = 6;            // increments every reset; detects reboots
+  uint32 watchdog_ms = 7;
+  repeated JointCalibration calibration = 8;
+}
+
+message SetCalibrationRequest {
+  JointCalibration joint = 1;
+}
+
+message SetRobotTypeRequest {
+  string robot_type = 1;
+}
+
+message SetWatchdogRequest {
+  uint32 watchdog_ms = 1;  // 0 disables (bench use only)
+}
+
+message HomeRequest {
+  uint32 joint_mask = 1;   // bit i = home joint i; 0 = all joints
+  uint32 timeout_ms = 2;   // per joint; 0 = firmware default
+}
+
+message EnableRequest {
+  bool allow_unhomed = 1;  // bench use only: ACTIVE without homing, soft limits off
+}
+
+message DisableRequest {}
+
+message ClearFaultRequest {}
+
+message PingRequest {
+  uint32 nonce = 1;
+}
+
+message Request {
+  uint32 request_id = 1;
+  oneof body {
+    GetInfoRequest get_info = 10;
+    SetCalibrationRequest set_calibration = 11;
+    SetRobotTypeRequest set_robot_type = 12;
+    SetWatchdogRequest set_watchdog = 13;
+    HomeRequest home = 14;
+    EnableRequest enable = 15;
+    DisableRequest disable = 16;
+    ClearFaultRequest clear_fault = 17;
+    PingRequest ping = 18;
+  }
+}
+
+message Response {
+  uint32 request_id = 1;  // echoes Request.request_id
+  Result result = 2;
+  string message = 3;     // human-readable detail on error, empty on success
+  oneof body {
+    GetInfoResponse get_info = 10;
+    uint32 pong = 18;     // echoes PingRequest.nonce
+  }
+}
+
+// ---------------------------------------------------------------------------------
+// Events (controller -> Pi, on occurrence)
+// ---------------------------------------------------------------------------------
+
+message Event {
+  oneof body {
+    FaultCode fault_raised = 1;
+    uint32 homing_progress_mask = 2;  // joints homed so far
+    uint32 homing_complete_mask = 3;  // final mask when the sequence ends
+    uint32 limit_switch_mask = 4;     // joints whose switch changed state
+    SystemState state_changed = 5;
+  }
+}
+
+// ---------------------------------------------------------------------------------
+// Envelope: every frame on the wire is exactly one of these
+// ---------------------------------------------------------------------------------
+
+message Envelope {
+  uint32 seq = 1;            // per-sender counter, wraps; gaps mean dropped frames
+  uint64 timestamp_us = 2;   // sender's monotonic clock; diagnostics only
+  oneof payload {
+    JointCommand joint_command = 10;
+    JointState joint_state = 11;
+    Request request = 12;
+    Response response = 13;
+    Event event = 14;
+  }
+}

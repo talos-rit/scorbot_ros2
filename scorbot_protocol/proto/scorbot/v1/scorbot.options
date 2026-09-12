@@ -1,0 +1,23 @@
+# nanopb options: fixed sizes so every message is a plain static struct on both the
+# ESP32 and the Pi. Eight joints leaves room for the slide and the gripper beyond the
+# five modelled today.
+
+* type:FT_STATIC
+
+scorbot.v1.JointCommand.mode              max_count:8
+scorbot.v1.JointCommand.position          max_count:8
+scorbot.v1.JointCommand.velocity          max_count:8
+
+scorbot.v1.JointState.position            max_count:8
+scorbot.v1.JointState.velocity            max_count:8
+scorbot.v1.JointState.current             max_count:8
+scorbot.v1.JointState.flags               max_count:8
+
+scorbot.v1.GetInfoResponse.firmware_version   max_size:32
+scorbot.v1.GetInfoResponse.robot_type         max_size:16
+scorbot.v1.GetInfoResponse.joint_names        max_count:8 max_size:24
+scorbot.v1.GetInfoResponse.calibration        max_count:8
+
+scorbot.v1.SetRobotTypeRequest.robot_type     max_size:16
+
+scorbot.v1.Response.message                   max_size:48
