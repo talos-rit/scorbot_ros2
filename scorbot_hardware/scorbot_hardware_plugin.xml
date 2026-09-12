@@ -1,0 +1,11 @@
+<library path="scorbot_hardware">
+  <class name="scorbot_hardware/ScorbotSystem"
+         type="scorbot_hardware::ScorbotSystem"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      ros2_control SystemInterface for the Talos ESP32 Scorbot controller over serial
+      (scorbot_protocol). Position/velocity command interfaces per joint; homing,
+      enable, disable and clear-fault through the "system" GPIO interfaces.
+    </description>
+  </class>
+</library>

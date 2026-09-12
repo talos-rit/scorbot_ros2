@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>scorbot_hardware</name>
+  <version>0.1.0</version>
+  <description>ros2_control SystemInterface for the Talos ESP32 Scorbot controller: serial link (scorbot_protocol), calibration push, homing/enable/fault services through GPIO interfaces.</description>
+  <maintainer email="jdodle001@gmail.com">Jacob Odle</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <depend>scorbot_protocol</depend>
+  <depend>yaml_cpp_vendor</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_xmllint</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ament_index_cpp</test_depend>
+  <test_depend>ros2_control_test_assets</test_depend>
+  <test_depend>scorbot_esp_sim</test_depend>
+  <test_depend>scorbot_description</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <hardware_interface plugin="${prefix}/scorbot_hardware_plugin.xml"/>
+  </export>
+</package>

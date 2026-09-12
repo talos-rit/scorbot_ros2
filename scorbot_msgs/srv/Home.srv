@@ -1,0 +1,8 @@
+# Home joints on the ESP32 controller. Blocks until the sequence finishes.
+# Refused while any joint controller is active (stop them first).
+string[] joints      # empty = every joint
+float32 timeout_s    # 0 = the controller's home_timeout_s parameter
+---
+bool success
+string message
+uint32 homed_mask    # joints homed when the call returned
