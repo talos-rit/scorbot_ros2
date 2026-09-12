@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>scorbot_kinematics</name>
+  <version>0.1.0</version>
+  <description>Closed-form inverse kinematics for the 5-DOF Scorbot ER-V / ER-4pc as a MoveIt 2 kinematics plugin.</description>
+  <maintainer email="jdodle001@gmail.com">Jacob Odle</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>moveit_core</depend>
+  <depend>pluginlib</depend>
+  <depend>geometry_msgs</depend>
+  <depend>moveit_msgs</depend>
+  <depend>tf2_eigen</depend>
+  <depend>eigen</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_xmllint</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <!-- The plugin is registered from CMakeLists.txt via pluginlib_export_plugin_description_file. -->
+  </export>
+</package>

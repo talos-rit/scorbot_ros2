@@ -1,0 +1,11 @@
+<library path="scorbot_kinematics_plugin">
+  <class name="scorbot_kinematics/ScorbotKinematicsPlugin"
+         type="scorbot_kinematics::ScorbotKinematicsPlugin"
+         base_class_type="kinematics::KinematicsBase">
+    <description>
+      Closed-form inverse kinematics for the 5-DOF Scorbot ER-V / ER-4pc. Meets the
+      requested position exactly and the closest reachable orientation (tool yaw is not
+      free on this arm). Geometry is read from the robot model at start-up.
+    </description>
+  </class>
+</library>
