@@ -1,0 +1,10 @@
+<library path="scorbot_system_controller">
+  <class name="scorbot_system_controller/ScorbotSystemController"
+         type="scorbot_system_controller::ScorbotSystemController"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>
+      Home / enable / disable / clear-fault services and a status topic for the ESP32
+      Scorbot controller, through scorbot_hardware's "system" GPIO interfaces.
+    </description>
+  </class>
+</library>
