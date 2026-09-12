@@ -1,0 +1,25 @@
+# How MoveIt executes trajectories: through the joint_trajectory_controller that
+# scorbot_bringup starts. move_group runs in the robot's namespace, so the relative
+# controller name resolves to /<name>/joint_trajectory_controller. Joint lists are
+# prefixed at launch when `prefix` is set.
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+moveit_simple_controller_manager:
+  controller_names:
+    - joint_trajectory_controller
+
+  joint_trajectory_controller:
+    type: FollowJointTrajectory
+    action_ns: follow_joint_trajectory
+    default: true
+    joints:
+      - base_joint
+      - shoulder_joint
+      - elbow_joint
+      - wrist_pitch_joint
+      - wrist_roll_joint
+
+trajectory_execution:
+  allowed_execution_duration_scaling: 1.5
+  allowed_goal_duration_margin: 1.0
+  allowed_start_tolerance: 0.02

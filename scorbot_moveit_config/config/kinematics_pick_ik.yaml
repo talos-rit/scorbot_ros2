@@ -1,0 +1,35 @@
+# Inverse kinematics with pick_ik (PickNik's optimisation-based solver).
+#
+# Why not KDL: the arm has five joints, so it cannot reach an arbitrary 6-D pose. KDL
+# in position-only mode ignores the rotation rings entirely and, with five joints for
+# three constraints, wanders through the family of solutions while dragging (jank).
+#
+# pick_ik in `local` mode runs gradient descent from the current joint state, so
+# consecutive marker updates give consecutive solutions: smooth dragging. The cost is
+# position (weight 1) plus orientation (weight rotation_scale). Orientation the arm
+# cannot achieve (tool yaw is fixed by the base angle) is traded off rather than
+# rejected, and the approximate_solution_* thresholds accept such compromises so the
+# marker keeps tracking instead of snapping back.
+#
+# Select with:  ros2 launch scorbot_moveit_config move_group.launch.py ik:=pick_ik
+arm:
+  kinematics_solver: pick_ik/PickIkPlugin
+  kinematics_solver_timeout: 0.05
+  kinematics_solver_attempts: 3
+  mode: local
+  stop_optimization_on_valid_solution: true
+  position_scale: 1.0
+  rotation_scale: 0.25
+  position_threshold: 0.002
+  orientation_threshold: 0.05
+  cost_threshold: 0.002
+  # Stay close to the seed between marker updates.
+  minimal_displacement_weight: 0.001
+  center_joints_weight: 0.0
+  avoid_joint_limits_weight: 0.0
+  gd_step_size: 0.0001
+  # Accept the best reachable compromise when the requested orientation is impossible.
+  approximate_solution_position_threshold: 0.01
+  approximate_solution_orientation_threshold: 1.0
+  approximate_solution_cost_threshold: 0.2
+  approximate_solution_joint_threshold: 0.5

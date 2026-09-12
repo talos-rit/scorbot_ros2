@@ -1,0 +1,12 @@
+# Default inverse kinematics: the closed-form Scorbot solver (scorbot_kinematics).
+#
+# Exact position, closest reachable orientation (tool yaw is fixed by the base angle on
+# a 5-DOF arm), deterministic branch choice nearest the current state, so the RViz
+# marker drags smoothly and the pitch/roll rings work. See scorbot_kinematics/README.md.
+arm:
+  kinematics_solver: scorbot_kinematics/ScorbotKinematicsPlugin
+  kinematics_solver_timeout: 0.005
+  kinematics_solver_attempts: 1
+  # Radians of orientation error above which a pose is rejected unless MoveIt allows
+  # approximate solutions. 3.2 (> pi) never rejects: the marker always tracks.
+  orientation_tolerance: 3.2
