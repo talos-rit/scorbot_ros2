@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Run a command with the ROS 2 workspace sourced. Used for `docker compose exec`,
+# which bypasses the entrypoint:
+#   docker compose -f docker/compose.yaml exec station ws ros2 run [insert thing here]
+set -eo pipefail
+source "/opt/ros/${ROS_DISTRO:-jazzy}/setup.bash"
+if [ -f "${WS:-/ws}/install/setup.bash" ]; then
+    source "${WS:-/ws}/install/setup.bash"
+fi
+exec "$@"

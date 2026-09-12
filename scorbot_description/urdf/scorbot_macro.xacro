@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<!--
+  scorbot_arm macro: builds one Scorbot arm (ER-V or ER-4pc) from a kinematics YAML.
+
+  All robot-specific numbers live in config/<robot_type>_kinematics.yaml. This file only
+  knows the topology: base_link -> turret_link -> upper_arm_link -> forearm_link ->
+  wrist_link -> flange_link -> tool0, driven by base_joint, shoulder_joint, elbow_joint,
+  wrist_pitch_joint, wrist_roll_joint.
+
+  Parameters
+    prefix      string prepended to every link and joint name (e.g. "bluey_")
+    robot_type  er_4pc | er_v  (selects config/<robot_type>_kinematics.yaml)
+    parent      link to attach base_link to with a fixed joint; empty string for none
+    origin_xyz  position of base_link in the parent frame
+    origin_rpy  orientation of base_link in the parent frame
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <material name="scorbot_blue">
+    <color rgba="0.16 0.35 0.70 1.0"/>
+  </material>
+  <material name="scorbot_grey">
+    <color rgba="0.62 0.62 0.60 1.0"/>
+  </material>
+  <material name="scorbot_dark">
+    <color rgba="0.20 0.20 0.22 1.0"/>
+  </material>
+
+  <!-- Inertia of a solid box, used as a first approximation for every link. -->
+  <xacro:macro name="box_inertial" params="mass size xyz">
+    <xacro:property name="sx" value="${float(size.split()[0])}"/>
+    <xacro:property name="sy" value="${float(size.split()[1])}"/>
+    <xacro:property name="sz" value="${float(size.split()[2])}"/>
+    <inertial>
+      <origin xyz="${xyz}" rpy="0 0 0"/>
+      <mass value="${mass}"/>
+      <inertia
+        ixx="${mass / 12.0 * (sy * sy + sz * sz)}" ixy="0" ixz="0"
+        iyy="${mass / 12.0 * (sx * sx + sz * sz)}" iyz="0"
+        izz="${mass / 12.0 * (sx * sx + sy * sy)}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Geometry element from a visual spec: one of mesh | box | cylinder. -->
+  <xacro:macro name="scorbot_geometry" params="spec">
+    <geometry>
+      <xacro:if value="${'mesh' in spec}">
+        <mesh filename="package://scorbot_description/meshes/${spec['mesh']}"/>
+      </xacro:if>
+      <xacro:if value="${'box' in spec}">
+        <box size="${spec['box']}"/>
+      </xacro:if>
+      <xacro:if value="${'cylinder' in spec}">
+        <cylinder radius="${spec['cylinder']['radius']}" length="${spec['cylinder']['length']}"/>
+      </xacro:if>
+    </geometry>
+  </xacro:macro>
+
+  <xacro:macro name="scorbot_link" params="prefix name spec material">
+    <link name="${prefix}${name}">
+      <visual>
+        <origin xyz="${spec['visual']['xyz']}" rpy="${spec['visual']['rpy']}"/>
+        <xacro:scorbot_geometry spec="${spec['visual']}"/>
+        <material name="${material}"/>
+      </visual>
+      <collision>
+        <origin xyz="${spec['visual']['xyz']}" rpy="${spec['visual']['rpy']}"/>
+        <xacro:scorbot_geometry spec="${spec['visual']}"/>
+      </collision>
+      <xacro:box_inertial
+        mass="${spec['inertial']['mass']}"
+        size="${spec['inertial']['size']}"
+        xyz="${spec['inertial']['xyz']}"/>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="scorbot_joint" params="prefix name spec">
+    <joint name="${prefix}${name}" type="revolute">
+      <origin xyz="${spec['xyz']}" rpy="${spec['rpy']}"/>
+      <parent link="${prefix}${spec['parent']}"/>
+      <child link="${prefix}${spec['child']}"/>
+      <axis xyz="${spec['axis']}"/>
+      <limit
+        lower="${radians(spec['lower_deg'])}"
+        upper="${radians(spec['upper_deg'])}"
+        effort="${spec['effort']}"
+        velocity="${radians(spec['velocity_deg_s'])}"/>
+      <dynamics damping="0.1" friction="0.0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="scorbot_arm" params="prefix robot_type parent:='' origin_xyz:='0 0 0' origin_rpy:='0 0 0'">
+    <!-- Relative to this file: xacro resolves load_yaml paths against the current file. -->
+    <xacro:property name="kin" value="${xacro.load_yaml('../config/' + robot_type + '_kinematics.yaml')}"/>
+    <xacro:property name="links" value="${kin['links']}"/>
+    <xacro:property name="joints" value="${kin['joints']}"/>
+    <xacro:property name="material" value="${kin['material']}"/>
+
+    <xacro:unless value="${parent == ''}">
+      <joint name="${prefix}base_joint_fixed" type="fixed">
+        <origin xyz="${origin_xyz}" rpy="${origin_rpy}"/>
+        <parent link="${parent}"/>
+        <child link="${prefix}base_link"/>
+      </joint>
+    </xacro:unless>
+
+    <xacro:scorbot_link prefix="${prefix}" name="base_link"      spec="${links['base_link']}"      material="scorbot_dark"/>
+    <xacro:scorbot_link prefix="${prefix}" name="turret_link"    spec="${links['turret_link']}"    material="${material}"/>
+    <xacro:scorbot_link prefix="${prefix}" name="upper_arm_link" spec="${links['upper_arm_link']}" material="${material}"/>
+    <xacro:scorbot_link prefix="${prefix}" name="forearm_link"   spec="${links['forearm_link']}"   material="${material}"/>
+    <xacro:scorbot_link prefix="${prefix}" name="wrist_link"     spec="${links['wrist_link']}"     material="${material}"/>
+    <xacro:scorbot_link prefix="${prefix}" name="flange_link"    spec="${links['flange_link']}"    material="scorbot_dark"/>
+
+    <xacro:scorbot_joint prefix="${prefix}" name="base_joint"        spec="${joints['base_joint']}"/>
+    <xacro:scorbot_joint prefix="${prefix}" name="shoulder_joint"    spec="${joints['shoulder_joint']}"/>
+    <xacro:scorbot_joint prefix="${prefix}" name="elbow_joint"       spec="${joints['elbow_joint']}"/>
+    <xacro:scorbot_joint prefix="${prefix}" name="wrist_pitch_joint" spec="${joints['wrist_pitch_joint']}"/>
+    <xacro:scorbot_joint prefix="${prefix}" name="wrist_roll_joint"  spec="${joints['wrist_roll_joint']}"/>
+
+    <!-- ROS-Industrial style tool frame: z points out of the flange. -->
+    <link name="${prefix}tool0"/>
+    <joint name="${prefix}flange_link-tool0" type="fixed">
+      <origin xyz="${kin['tool0']['xyz']}" rpy="${kin['tool0']['rpy']}"/>
+      <parent link="${prefix}${kin['tool0']['parent']}"/>
+      <child link="${prefix}tool0"/>
+    </joint>
+  </xacro:macro>
+
+</robot>

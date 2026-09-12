@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<!--
+  Top-level description of one Scorbot arm.
+
+  Usage
+    xacro scorbot.urdf.xacro robot_type:=er_4pc
+    xacro scorbot.urdf.xacro robot_type:=er_v prefix:=bingo_ world_frame:=world x:=1.0
+    xacro scorbot.urdf.xacro robot_type:=er_4pc use_ros2_control:=true mock:=true
+
+  Arguments
+    robot_type        er_4pc (Bluey) | er_v (Bingo)
+    name              robot name; also the ros2_control system name
+    prefix            prefix for all link and joint names (use when two arms share a TF tree)
+    world_frame       if non-empty, a fixed link with this name is created and base_link is
+                      attached to it at (x, y, z, yaw). Leave empty to make base_link the root.
+    x y z yaw         placement of base_link in world_frame
+    use_ros2_control  emit the <ros2_control> block
+    mock              use mock_components instead of the real ESP32 hardware interface
+    serial_port       ESP32 serial device (real hardware only)
+    calibration_file  calibration YAML for the ESP32 (real hardware only)
+    auto_home         home on activation when the controller is not homed (real hardware only)
+    allow_unhomed     bench only: enable drives without homing, no soft limits (real hardware only)
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="scorbot">
+
+  <xacro:arg name="robot_type" default="er_4pc"/>
+  <xacro:arg name="name" default="scorbot"/>
+  <xacro:arg name="prefix" default=""/>
+  <xacro:arg name="world_frame" default="world"/>
+  <xacro:arg name="x" default="0.0"/>
+  <xacro:arg name="y" default="0.0"/>
+  <xacro:arg name="z" default="0.0"/>
+  <xacro:arg name="yaw" default="0.0"/>
+  <xacro:arg name="use_ros2_control" default="false"/>
+  <xacro:arg name="mock" default="true"/>
+  <xacro:arg name="serial_port" default="/dev/ttyUSB0"/>
+  <xacro:arg name="calibration_file" default="$(find scorbot_description)/config/$(arg robot_type)_calibration.yaml"/>
+  <xacro:arg name="auto_home" default="false"/>
+  <xacro:arg name="allow_unhomed" default="false"/>
+
+  <!-- Relative include paths resolve against this file's directory. -->
+  <xacro:include filename="scorbot_macro.xacro"/>
+  <xacro:include filename="scorbot.ros2_control.xacro"/>
+
+  <xacro:property name="world_frame" value="$(arg world_frame)"/>
+
+  <xacro:unless value="${world_frame == ''}">
+    <link name="${world_frame}"/>
+  </xacro:unless>
+
+  <xacro:scorbot_arm
+    prefix="$(arg prefix)"
+    robot_type="$(arg robot_type)"
+    parent="${world_frame}"
+    origin_xyz="$(arg x) $(arg y) $(arg z)"
+    origin_rpy="0 0 $(arg yaw)"/>
+
+  <xacro:if value="$(arg use_ros2_control)">
+    <xacro:scorbot_ros2_control
+      name="$(arg name)"
+      prefix="$(arg prefix)"
+      robot_type="$(arg robot_type)"
+      mock="$(arg mock)"
+      serial_port="$(arg serial_port)"
+      calibration_file="$(arg calibration_file)"
+      auto_home="$(arg auto_home)"
+      allow_unhomed="$(arg allow_unhomed)"/>
+  </xacro:if>
+
+</robot>

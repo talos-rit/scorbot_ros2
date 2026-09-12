@@ -1,0 +1,109 @@
+# Kinematic and visual description of the Scorbot ER-4pc ("Bluey").
+#
+# Frames follow the conventions in scorbot_description/README.md:
+#   - base_link at the centre of the base mounting face, z up, x forward.
+#   - At the zero pose the arm points straight out along +x, horizontal.
+#   - Positive shoulder / elbow / wrist_pitch lifts the distal link (rotation about -y).
+#   - Positive wrist_roll is right-handed about +x (looking from the base toward the tool).
+#
+# Joint origins were derived from the SolidWorks export in
+# commander/digital_twin/sboter4u_model (see README "Provenance"). Vectors are
+# space-separated strings so xacro can paste them straight into URDF attributes.
+#
+# Items marked VERIFY have not been checked against the physical robot.
+
+robot_type: er_4pc
+material: scorbot_blue
+
+links:
+  base_link:
+    visual:
+      mesh: er_4pc/base.stl
+      # Folds the exporter's tilted base frame into the mesh so joint axes stay exact.
+      xyz: "-0.13902 -0.14222 -0.07809"
+      rpy: "-0.06299 0.00400 1.63421"
+    inertial: { mass: 13.94, size: "0.255 0.230 0.191", xyz: "-0.013 0 0.095" }
+
+  turret_link:
+    visual: { mesh: er_4pc/turret.stl, xyz: "0 0 0", rpy: "0 0 1.5707963" }
+    inertial: { mass: 12.10, size: "0.202 0.274 0.215", xyz: "0 0 0.11" }
+
+  upper_arm_link:
+    visual: { mesh: er_4pc/upper_arm.stl, xyz: "0 0 0", rpy: "0 0 1.5707963" }
+    inertial: { mass: 2.83, size: "0.290 0.190 0.070", xyz: "0.11 0 0" }
+
+  forearm_link:
+    visual: { mesh: er_4pc/forearm.stl, xyz: "0 0 0", rpy: "0 0 1.5707963" }
+    inertial: { mass: 3.24, size: "0.280 0.160 0.060", xyz: "0.11 0 0" }
+
+  wrist_link:
+    visual: { mesh: er_4pc/wrist.stl, xyz: "0 0 0", rpy: "1.5707963 -1.5707963 -1.5707963" }
+    inertial: { mass: 0.48, size: "0.103 0.052 0.052", xyz: "0.01 0 0" }
+
+  flange_link:
+    # Gripper body. Fingers point along +x; the motor housing extends back over the forearm.
+    visual: { mesh: er_4pc/flange.stl, xyz: "0 0 0", rpy: "1.5707963 -1.5707963 -1.5707963" }
+    inertial: { mass: 0.28, size: "0.238 0.140 0.060", xyz: "-0.02 0 0" }
+
+joints:
+  base_joint:
+    parent: base_link
+    child: turret_link
+    xyz: "0 0 0.14833"
+    rpy: "0 0 0"
+    axis: "0 0 1"
+    lower_deg: -155          # 310 deg total travel (manual)
+    upper_deg: 155
+    velocity_deg_s: 20       # VERIFY: taken from the SolidWorks export
+    effort: 5.0              # VERIFY
+
+  shoulder_joint:
+    parent: turret_link
+    child: upper_arm_link
+    xyz: "0.029 0 0.19766"
+    rpy: "0 0 0"
+    axis: "0 -1 0"
+    lower_deg: -35           # manual: +130 / -35
+    upper_deg: 130
+    velocity_deg_s: 26       # VERIFY
+    effort: 4.0              # VERIFY
+
+  elbow_joint:
+    parent: upper_arm_link
+    child: forearm_link
+    xyz: "0.22 0 0"
+    rpy: "0 0 0"
+    axis: "0 -1 0"
+    lower_deg: -130          # manual: +/-130
+    upper_deg: 130
+    velocity_deg_s: 26       # VERIFY
+    effort: 3.0              # VERIFY
+
+  wrist_pitch_joint:
+    parent: forearm_link
+    child: wrist_link
+    xyz: "0.22 0 0"
+    rpy: "0 0 0"
+    axis: "0 -1 0"
+    lower_deg: -130          # manual: +/-130
+    upper_deg: 130
+    velocity_deg_s: 83       # VERIFY
+    effort: 2.0              # VERIFY
+
+  wrist_roll_joint:
+    parent: wrist_link
+    child: flange_link
+    xyz: "0 0 0"
+    rpy: "0 0 0"
+    axis: "1 0 0"
+    lower_deg: -570          # manual: +/-570 electrically
+    upper_deg: 570
+    velocity_deg_s: 106      # VERIFY
+    effort: 2.0              # VERIFY
+
+# tool0: fixed frame on the flange with z pointing out along the tool (ROS-Industrial convention).
+# The camera mount offset is applied on top of this by the bringup, not here.
+tool0:
+  parent: flange_link
+  xyz: "0 0 0"
+  rpy: "0 1.5707963 0"

@@ -1,0 +1,74 @@
+# Per-joint calibration for the Scorbot ER-V ("Bingo") ESP32 controller.
+#
+# PLACEHOLDER. Bingo has no ESP32 controller board yet and its encoders are reported
+# to be lower resolution than Bluey's. Every value below is copied from the ER-4pc
+# file and must be measured before this robot is driven (VERIFY). Soft limits come
+# from the manual and are the only trustworthy numbers here.
+
+robot_type: er_v
+joints:
+  base_joint:
+    counts_per_motor_rev: 80     # VERIFY
+    gear_ratio: 635.5            # VERIFY
+    home_offset_rad: 0.0         # VERIFY
+    home_direction: -1           # VERIFY
+    soft_limit_min_rad: -2.7053
+    soft_limit_max_rad: 2.7053
+    max_velocity_rad_s: 0.35
+    max_accel_rad_s2: 1.0
+    current_limit_a: 2.0         # VERIFY
+    invert: false                # VERIFY: joint positive direction vs. motor
+    encoder_invert: false        # VERIFY: count must rise on positive drive; the P0/P1 pad
+                                 # order differs between the ER-4u and ER-Vplus manuals
+  shoulder_joint:
+    counts_per_motor_rev: 80     # VERIFY
+    gear_ratio: 457.56           # VERIFY
+    home_offset_rad: 0.0         # VERIFY
+    home_direction: -1           # VERIFY
+    soft_limit_min_rad: -0.6109
+    soft_limit_max_rad: 2.2689
+    max_velocity_rad_s: 0.45
+    max_accel_rad_s2: 1.0
+    current_limit_a: 2.0         # VERIFY
+    invert: false                # VERIFY: joint positive direction vs. motor
+    encoder_invert: false        # VERIFY: count must rise on positive drive; the P0/P1 pad
+                                 # order differs between the ER-4u and ER-Vplus manuals
+  elbow_joint:
+    counts_per_motor_rev: 80     # VERIFY
+    gear_ratio: 457.56           # VERIFY
+    home_offset_rad: 0.0         # VERIFY
+    home_direction: -1           # VERIFY
+    soft_limit_min_rad: -2.2689
+    soft_limit_max_rad: 2.2689
+    max_velocity_rad_s: 0.45
+    max_accel_rad_s2: 1.0
+    current_limit_a: 2.0         # VERIFY
+    invert: false                # VERIFY: joint positive direction vs. motor
+    encoder_invert: false        # VERIFY: count must rise on positive drive; the P0/P1 pad
+                                 # order differs between the ER-4u and ER-Vplus manuals
+  wrist_pitch_joint:
+    counts_per_motor_rev: 80     # VERIFY
+    gear_ratio: 125.54           # VERIFY
+    home_offset_rad: 0.0         # VERIFY
+    home_direction: -1           # VERIFY
+    soft_limit_min_rad: -2.2689
+    soft_limit_max_rad: 2.2689
+    max_velocity_rad_s: 1.4
+    max_accel_rad_s2: 3.0
+    current_limit_a: 1.5         # VERIFY
+    invert: false                # VERIFY: joint positive direction vs. motor
+    encoder_invert: false        # VERIFY: count must rise on positive drive; the P0/P1 pad
+                                 # order differs between the ER-4u and ER-Vplus manuals
+  wrist_roll_joint:
+    counts_per_motor_rev: 80     # VERIFY
+    gear_ratio: 125.54           # VERIFY
+    home_offset_rad: 0.0         # VERIFY
+    home_direction: -1           # VERIFY
+    soft_limit_min_rad: -9.9484
+    soft_limit_max_rad: 9.9484
+    max_velocity_rad_s: 1.8
+    max_accel_rad_s2: 3.0
+    current_limit_a: 1.5         # VERIFY
+    invert: false                # VERIFY: joint positive direction vs. motor
+    encoder_invert: false        # VERIFY: count must rise on positive drive; the P0/P1 pad
+                                 # order differs between the ER-4u and ER-Vplus manuals

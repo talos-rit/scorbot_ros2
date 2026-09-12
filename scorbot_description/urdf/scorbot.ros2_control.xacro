@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<!--
+  ros2_control block for one Scorbot arm. Mirrors section 5.4 of
+  project_documentation/technical/ros2/ros2_architecture.md.
+
+  Parameters
+    name              name of the ros2_control system (must be unique per controller_manager)
+    prefix            same prefix as the scorbot_arm macro
+    robot_type        er_4pc | er_v
+    mock              true  -> mock_components/GenericSystem (virtual station)
+                      false -> scorbot_hardware/ScorbotSystem (real ESP32 over serial)
+    serial_port       device path for the ESP32 link (real hardware only)
+    calibration_file  YAML pushed to the ESP32 at configure time (real hardware only)
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="scorbot_joint_interfaces" params="name">
+    <joint name="${name}">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="scorbot_ros2_control"
+               params="name prefix robot_type mock:=true serial_port:='/dev/ttyUSB0' calibration_file:=''
+                       auto_home:=false allow_unhomed:=false">
+    <ros2_control name="${name}" type="system">
+      <hardware>
+        <xacro:if value="${mock}">
+          <plugin>mock_components/GenericSystem</plugin>
+          <!-- Integrate velocity commands into position so the arm moves under velocity control too. -->
+          <param name="calculate_dynamics">true</param>
+        </xacro:if>
+        <xacro:unless value="${mock}">
+          <plugin>scorbot_hardware/ScorbotSystem</plugin>
+          <param name="transport">serial</param>
+          <param name="serial_port">${serial_port}</param>
+          <param name="baud_rate">921600</param>
+          <param name="robot_type">${robot_type}</param>
+          <xacro:unless value="${prefix == ''}">
+            <param name="prefix">${prefix}</param>
+          </xacro:unless>
+          <param name="calibration_file">${calibration_file}</param>
+          <param name="state_timeout_ms">100</param>
+          <param name="command_watchdog_ms">200</param>
+          <param name="request_timeout_ms">200</param>
+          <param name="activate_timeout_s">3.0</param>
+          <param name="home_timeout_s">90.0</param>
+          <!-- Home on activate if the controller is not homed yet (blocks activation). -->
+          <param name="auto_home_on_activate">${str(auto_home).lower()}</param>
+          <!-- Bench only: enable the drives without homing (no soft limits, relative positions). -->
+          <param name="allow_unhomed">${str(allow_unhomed).lower()}</param>
+        </xacro:unless>
+      </hardware>
+
+      <xacro:scorbot_joint_interfaces name="${prefix}base_joint"/>
+      <xacro:scorbot_joint_interfaces name="${prefix}shoulder_joint"/>
+      <xacro:scorbot_joint_interfaces name="${prefix}elbow_joint"/>
+      <xacro:scorbot_joint_interfaces name="${prefix}wrist_pitch_joint"/>
+      <xacro:scorbot_joint_interfaces name="${prefix}wrist_roll_joint"/>
+
+      <xacro:unless value="${mock}">
+        <!-- Non-realtime services multiplexed through the hardware component (design D8).
+             Commands are pulses: the controller writes a nonzero value once, the hardware
+             acts on it and resets it to 0. Names must match scorbot_hardware/session.hpp. -->
+        <gpio name="${prefix}system">
+          <command_interface name="home"/>         <!-- joint bitmask (0x1F = all five) -->
+          <command_interface name="enable"/>       <!-- 1 = enable, 2 = enable unhomed (bench) -->
+          <command_interface name="disable"/>
+          <command_interface name="clear_fault"/>
+          <state_interface name="state"/>          <!-- scorbot.v1.SystemState -->
+          <state_interface name="fault_code"/>     <!-- scorbot.v1.FaultCode -->
+          <state_interface name="homed_mask"/>
+          <state_interface name="limit_mask"/>
+          <state_interface name="link_age_ms"/>
+          <state_interface name="firmware_version"/>  <!-- major*10000 + minor*100 + patch -->
+          <state_interface name="boot_count"/>
+          <state_interface name="last_result"/>    <!-- scorbot.v1.Result of the last pulse, -1 pending -->
+          <state_interface name="commands_ignored"/>
+          <state_interface name="request_count"/>  <!-- pulses consumed; service handshake -->
+        </gpio>
+      </xacro:unless>
+    </ros2_control>
+  </xacro:macro>
+
+</robot>

@@ -1,0 +1,97 @@
+# Kinematic and visual description of the Scorbot ER-V ("Bingo").
+#
+# No CAD exists for the ER-V yet, so visuals are primitives. The manuals give the
+# ER-V and ER-4u identical axis ranges, and the ER-4u export shows 220 mm upper arm
+# and 220 mm forearm, so the ER-V uses the same nominal joint placement until it is
+# measured. Everything in this file is VERIFY until then.
+#
+# Same frame conventions as er_4pc_kinematics.yaml.
+
+robot_type: er_v
+material: scorbot_grey
+
+links:
+  base_link:
+    visual: { box: "0.28 0.23 0.19", xyz: "-0.02 0 0.095", rpy: "0 0 0" }
+    inertial: { mass: 14.0, size: "0.28 0.23 0.19", xyz: "-0.02 0 0.095" }
+
+  turret_link:
+    visual: { cylinder: { radius: 0.095, length: 0.20 }, xyz: "0 0 0.10", rpy: "0 0 0" }
+    inertial: { mass: 12.0, size: "0.19 0.19 0.20", xyz: "0 0 0.10" }
+
+  upper_arm_link:
+    visual: { box: "0.26 0.06 0.10", xyz: "0.11 0 0", rpy: "0 0 0" }
+    inertial: { mass: 2.8, size: "0.26 0.06 0.10", xyz: "0.11 0 0" }
+
+  forearm_link:
+    visual: { box: "0.24 0.05 0.08", xyz: "0.11 0 0", rpy: "0 0 0" }
+    inertial: { mass: 3.2, size: "0.24 0.05 0.08", xyz: "0.11 0 0" }
+
+  wrist_link:
+    visual: { cylinder: { radius: 0.026, length: 0.10 }, xyz: "0.01 0 0", rpy: "0 1.5707963 0" }
+    inertial: { mass: 0.5, size: "0.10 0.052 0.052", xyz: "0.01 0 0" }
+
+  flange_link:
+    visual: { box: "0.12 0.06 0.06", xyz: "0.06 0 0", rpy: "0 0 0" }
+    inertial: { mass: 0.3, size: "0.12 0.06 0.06", xyz: "0.06 0 0" }
+
+joints:
+  base_joint:
+    parent: base_link
+    child: turret_link
+    xyz: "0 0 0.14833"       # VERIFY (copied from ER-4pc)
+    rpy: "0 0 0"
+    axis: "0 0 1"
+    lower_deg: -155
+    upper_deg: 155
+    velocity_deg_s: 20       # VERIFY
+    effort: 5.0              # VERIFY
+
+  shoulder_joint:
+    parent: turret_link
+    child: upper_arm_link
+    xyz: "0.029 0 0.19766"   # VERIFY (copied from ER-4pc)
+    rpy: "0 0 0"
+    axis: "0 -1 0"
+    lower_deg: -35
+    upper_deg: 130
+    velocity_deg_s: 26       # VERIFY
+    effort: 4.0              # VERIFY
+
+  elbow_joint:
+    parent: upper_arm_link
+    child: forearm_link
+    xyz: "0.22 0 0"          # VERIFY
+    rpy: "0 0 0"
+    axis: "0 -1 0"
+    lower_deg: -130
+    upper_deg: 130
+    velocity_deg_s: 26       # VERIFY
+    effort: 3.0              # VERIFY
+
+  wrist_pitch_joint:
+    parent: forearm_link
+    child: wrist_link
+    xyz: "0.22 0 0"          # VERIFY
+    rpy: "0 0 0"
+    axis: "0 -1 0"
+    lower_deg: -130
+    upper_deg: 130
+    velocity_deg_s: 83       # VERIFY
+    effort: 2.0              # VERIFY
+
+  wrist_roll_joint:
+    parent: wrist_link
+    child: flange_link
+    xyz: "0 0 0"
+    rpy: "0 0 0"
+    axis: "1 0 0"
+    lower_deg: -570
+    upper_deg: 570
+    velocity_deg_s: 106      # VERIFY
+    effort: 2.0              # VERIFY
+
+tool0:
+  parent: flange_link
+  xyz: "0.12 0 0"            # VERIFY: end of the placeholder flange box
+  rpy: "0 1.5707963 0"

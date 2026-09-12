@@ -1,0 +1,7 @@
+# Python bytecode
+__pycache__/
+*.pyc
+# colcon workspaces
+/build/
+/install/
+/log/
