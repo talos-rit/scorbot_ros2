@@ -52,7 +52,7 @@ public:
   scorbot_protocol::Envelope newEnvelope();
 
   /// Send `req` and wait up to `timeout` for the Response with the same id. One request
-  /// in flight at a time (serialised here). False on send failure or timeout; `error`
+  /// in flight at a time (serialized here). False on send failure or timeout; `error`
   /// gets a human-readable reason.
   bool request(const scorbot_protocol::Request& req, scorbot_protocol::Response& resp,
                std::chrono::milliseconds timeout, std::string* error = nullptr);

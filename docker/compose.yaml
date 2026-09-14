@@ -1,1 +1,177 @@
-# TODO  
+# Run from the scorbot_ros2 folder:
+#
+#   docker compose -f docker/compose.yaml up station       # virtual station; browser: http://localhost:6080/vnc.html
+#   ROBOT_TYPE=er_v docker compose -f docker/compose.yaml up station
+#   docker compose -f docker/compose.yaml exec station ws ros2 run scorbot_bringup demo_motion
+#   docker compose -f docker/compose.yaml up moveit        # station + MoveIt planning in RViz
+#   docker compose -f docker/compose.yaml up station-sim   # real hardware interface driving the ESP32 simulator
+#   docker compose -f docker/compose.yaml --profile native up station-sim-native   # same, native RViz window
+#   docker compose -f docker/compose.yaml up view          # description only, joint sliders
+#   docker compose -f docker/compose.yaml --profile native up station-native   # Linux X11 only
+#   docker compose -f docker/compose.yaml run --rm dev     # shell with the source mounted
+#   docker compose -f docker/compose.yaml run --rm test    # colcon test
+#
+# ROBOT_TYPE selects er_4pc (Bluey, default) or er_v (Bingo).
+
+x-image: &image
+  image: talos-rit/scorbot_ros2:jazzy
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+
+services:
+  # Virtual station: full ros2_control stack on mock hardware, RViz in the browser.
+  station:
+    <<: *image
+    container_name: scorbot_station
+    ports:
+      - "6080:6080"
+    environment:
+      SCORBOT_DISPLAY_MODE: vnc
+      VNC_GEOMETRY: ${VNC_GEOMETRY:-1600x900}
+    command: >
+      ros2 launch scorbot_bringup robot.launch.py
+      robot_type:=${ROBOT_TYPE:-er_4pc} mock:=true
+
+  # Virtual station plus MoveIt: plan and execute from the RViz MotionPlanning panel.
+  moveit:
+    <<: *image
+    container_name: scorbot_moveit
+    ports:
+      - "6080:6080"
+    environment:
+      SCORBOT_DISPLAY_MODE: vnc
+      VNC_GEOMETRY: ${VNC_GEOMETRY:-1600x900}
+    command: >
+      ros2 launch scorbot_moveit_config demo.launch.py
+      robot_type:=${ROBOT_TYPE:-er_4pc} mock:=true
+
+  # Tier 1: the real scorbot_hardware plugin driving scorbot_esp_sim over a pty, RViz in
+  # the browser. The controller starts UNHOMED; see scorbot_system_controller/README.md
+  # for the home / enable sequence (exec station-sim ws ros2 service call ...).
+  station-sim:
+    <<: *image
+    container_name: scorbot_station_sim
+    ports:
+      - "6080:6080"
+    environment:
+      SCORBOT_DISPLAY_MODE: vnc
+      VNC_GEOMETRY: ${VNC_GEOMETRY:-1600x900}
+    command: >
+      bash -c "ros2 run scorbot_esp_sim scorbot_esp_sim --link /tmp/scorbot --quiet </dev/null &
+      sleep 1 && exec ros2 launch scorbot_bringup robot.launch.py
+      robot_type:=${ROBOT_TYPE:-er_4pc} mock:=false serial_port:=/tmp/scorbot"
+
+  # Description only: RViz plus joint sliders, no controllers.
+  view:
+    <<: *image
+    container_name: scorbot_view
+    ports:
+      - "6080:6080"
+    environment:
+      SCORBOT_DISPLAY_MODE: vnc
+      VNC_GEOMETRY: ${VNC_GEOMETRY:-1600x900}
+    command: >
+      ros2 launch scorbot_description view_robot.launch.py
+      robot_type:=${ROBOT_TYPE:-er_4pc}
+
+  # Linux hosts with an X server (or XWayland): RViz opens as a normal window on the
+  # host, with GPU rendering through /dev/dri. Run `xhost +local:docker` once per login.
+  #   docker compose -f docker/compose.yaml --profile native up station-native
+  #   docker compose -f docker/compose.yaml --profile native up moveit-native
+  station-native:
+    <<: *image
+    profiles: ["native"]
+    network_mode: host
+    ipc: host
+    security_opt:
+      - label=disable          # SELinux (Fedora): allow the X socket bind mount
+    devices:
+      - /dev/dri:/dev/dri      # Intel/AMD GPU; NVIDIA needs the nvidia container toolkit
+    environment:
+      SCORBOT_DISPLAY_MODE: native
+      DISPLAY: ${DISPLAY:-:0}
+      LIBGL_ALWAYS_SOFTWARE: ${LIBGL_ALWAYS_SOFTWARE:-0}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    command: >
+      ros2 launch scorbot_bringup robot.launch.py
+      robot_type:=${ROBOT_TYPE:-er_4pc} mock:=true
+
+  moveit-native:
+    <<: *image
+    profiles: ["native"]
+    network_mode: host
+    ipc: host
+    security_opt:
+      - label=disable
+    devices:
+      - /dev/dri:/dev/dri
+    environment:
+      SCORBOT_DISPLAY_MODE: native
+      DISPLAY: ${DISPLAY:-:0}
+      LIBGL_ALWAYS_SOFTWARE: ${LIBGL_ALWAYS_SOFTWARE:-0}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    command: >
+      ros2 launch scorbot_moveit_config demo.launch.py
+      robot_type:=${ROBOT_TYPE:-er_4pc} mock:=true
+
+  station-sim-native:
+    <<: *image
+    profiles: ["native"]
+    network_mode: host
+    ipc: host
+    security_opt:
+      - label=disable
+    devices:
+      - /dev/dri:/dev/dri
+    environment:
+      SCORBOT_DISPLAY_MODE: native
+      DISPLAY: ${DISPLAY:-:0}
+      LIBGL_ALWAYS_SOFTWARE: ${LIBGL_ALWAYS_SOFTWARE:-0}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    command: >
+      bash -c "ros2 run scorbot_esp_sim scorbot_esp_sim --link /tmp/scorbot --quiet </dev/null &
+      sleep 1 && exec ros2 launch scorbot_bringup robot.launch.py
+      robot_type:=${ROBOT_TYPE:-er_4pc} mock:=false serial_port:=/tmp/scorbot"
+
+  # Development shell: the live source tree replaces the copy baked into the image.
+  # Inside: colcon build --symlink-install && source install/setup.bash
+  dev:
+    <<: *image
+    profiles: ["dev"]
+    stdin_open: true
+    tty: true
+    ports:
+      - "6080:6080"
+    environment:
+      SCORBOT_DISPLAY_MODE: vnc
+    volumes:
+      - ..:/ws/src/scorbot_ros2
+      - scorbot_build:/ws/build
+      - scorbot_install:/ws/install
+      - scorbot_log:/ws/log
+    command: bash
+
+  # Headless build and test, as CI runs it.
+  test:
+    <<: *image
+    profiles: ["dev"]
+    environment:
+      SCORBOT_DISPLAY_MODE: none
+    volumes:
+      - ..:/ws/src/scorbot_ros2
+      - scorbot_build:/ws/build
+      - scorbot_install:/ws/install
+      - scorbot_log:/ws/log
+    command: >
+      bash -c "colcon build --symlink-install
+      && colcon test --event-handlers console_direct+
+      && colcon test-result --verbose"
+
+volumes:
+  scorbot_build:
+  scorbot_install:
+  scorbot_log:

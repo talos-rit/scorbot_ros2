@@ -3,7 +3,7 @@
 <package format="3">
   <name>scorbot_esp_sim</name>
   <version>0.1.0</version>
-  <description>Simulated ESP32 Scorbot controller speaking scorbot_protocol over a pseudo-terminal: the executable specification of the firmware behaviour and the test double for the hardware interface.</description>
+  <description>Simulated ESP32 Scorbot controller speaking scorbot_protocol over a pseudo-terminal: the executable specification of the firmware behavior and the test double for the hardware interface.</description>
   <maintainer email="jdodle001@gmail.com">Jacob Odle</maintainer>
   <license>MIT</license>
 

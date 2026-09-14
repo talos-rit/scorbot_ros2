@@ -7,7 +7,7 @@
 # esp-driver/main/esp_driver.c. Encoder wheels have 20 slots read x4 = 80 counts per
 # motor revolution. Wrist ratios were marked uncertain by the previous team (VERIFY).
 # home_offset_rad and home_direction are unknown until the limit switches are
-# characterised on the robot (VERIFY).
+# characterized on the robot (VERIFY).
 
 robot_type: er_4pc
 joints:

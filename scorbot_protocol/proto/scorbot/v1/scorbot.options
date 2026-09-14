@@ -1,6 +1,6 @@
 # nanopb options: fixed sizes so every message is a plain static struct on both the
 # ESP32 and the Pi. Eight joints leaves room for the slide and the gripper beyond the
-# five modelled today.
+# five modeled today.
 
 * type:FT_STATIC
 

@@ -2,7 +2,7 @@
 
 The `ros2_control` hardware interface for the ESP32 Scorbot controller:
 `scorbot_hardware/ScorbotSystem`, a `SystemInterface` plugin that talks
-`scorbot_protocol` over USB serial. Modelled on `abb_ros2`'s hardware interface, with
+`scorbot_protocol` over USB serial. Modeled on `abb_ros2`'s hardware interface, with
 two command modes per joint and a service surface through GPIO interfaces (design
 D8). Design: `project_documentation/technical/ros2/ros2_architecture.md`, sections 5.5
 and 6.
@@ -38,7 +38,7 @@ over a pty, as `robot.launch.py mock:=false` does.
 | --- | --- | --- |
 | `transport` | `serial` | only serial for now (UDP later) |
 | `serial_port`, `baud_rate` | `/dev/ttyUSB0`, `921600` | the ESP32 link |
-| `robot_type` | required | `er_4pc` or `er_v`; must match what the controller reports (an `unset` controller is labelled) |
+| `robot_type` | required | `er_4pc` or `er_v`; must match what the controller reports (an `unset` controller is labeled) |
 | `prefix` | `` | joint-name prefix of the description; stripped before matching the controller's joint names |
 | `calibration_file` | required | pushed with `SetCalibration` at configure; the file's `robot_type` must match |
 | `state_timeout_ms` | 100 | `read()` returns ERROR when no `JointState` arrived for this long |

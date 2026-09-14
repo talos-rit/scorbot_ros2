@@ -129,7 +129,7 @@ inline double wrapPi(double a)
 /// Angle between two rotations.
 inline double rotationDistance(const Mat3& a, const Mat3& b) { return (a.transpose() * b).angle(); }
 
-/// Arm geometry, all lengths in metres, all derived from the URDF at start-up.
+/// Arm geometry, all lengths in meters, all derived from the URDF at start-up.
 struct Geometry
 {
   double z0{0.0};  ///< base_link to base joint, along z
@@ -137,7 +137,7 @@ struct Geometry
   double h1{0.0};  ///< base joint to shoulder axis, vertical
   double L1{0.0};  ///< upper arm
   double L2{0.0};  ///< forearm
-  double dt{0.0};  ///< wrist centre to tool0 along the flange x axis
+  double dt{0.0};  ///< wrist center to tool0 along the flange x axis
   Mat3 R_tool;     ///< flange -> tool0 rotation
   std::array<double, kNumJoints> sign{{1, 1, 1, 1, 1}};  ///< URDF axis sign per joint
   std::array<double, kNumJoints> lower{{-kPi, -kPi, -kPi, -kPi, -kPi}};
@@ -238,7 +238,7 @@ inline std::vector<Solution> inverseKinematics(const Geometry& g, const Vec3& p_
     const Mat3 R_f_achieved = R_pitched * Mat3::rotX(theta5);
     const double orientation_error = rotationDistance(R_f_achieved, R_f_target);
 
-    // Wrist centre, then the planar two-link problem in the arm's plane.
+    // Wrist center, then the planar two-link problem in the arm's plane.
     const Vec3 u_achieved{std::cos(phi) * c1, std::cos(phi) * s1, std::sin(phi)};
     const Vec3 p_w = p_tool - g.dt * u_achieved;
     const double r = p_w.x * c1 + p_w.y * s1 - g.a1;

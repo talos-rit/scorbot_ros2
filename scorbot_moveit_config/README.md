@@ -24,7 +24,7 @@ panel, or drag the marker, then Plan and Execute.
 | `config/kinematics_analytic.yaml` | closed-form Scorbot solver from `scorbot_kinematics` (default, `ik:=analytic`) |
 | `config/kinematics.yaml` | KDL, `position_only_ik: true` (`ik:=kdl`) |
 | `config/kinematics_pick_ik.yaml` | pick_ik with approximate solutions (`ik:=pick_ik`) |
-| `config/joint_limits.yaml` | velocity and acceleration limits for time parameterisation |
+| `config/joint_limits.yaml` | velocity and acceleration limits for time parameterization |
 | `config/moveit_controllers.yaml` | simple controller manager → `joint_trajectory_controller` |
 | `config/ompl_planning.yaml` | OMPL pipeline and planner set |
 | `config/moveit.rviz` | RViz with the MotionPlanning display |

@@ -3,7 +3,7 @@
 # The arm has five joints, so it cannot reach an arbitrary 6-D pose. Full-pose KDL
 # fails on almost every RViz marker drag; position_only_ik makes the interactive marker
 # and pose goals usable while ignoring orientation. For camera work that wants "look
-# at" behaviour, see kinematics_pick_ik.yaml (approximate orientation with a cost).
+# at" behavior, see kinematics_pick_ik.yaml (approximate orientation with a cost).
 arm:
   kinematics_solver: kdl_kinematics_plugin/KDLKinematicsPlugin
   kinematics_solver_search_resolution: 0.005

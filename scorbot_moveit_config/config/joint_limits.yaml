@@ -1,4 +1,4 @@
-# Velocity and acceleration limits used by MoveIt's time parameterisation.
+# Velocity and acceleration limits used by MoveIt's time parameterization.
 # Position limits come from the URDF. Values mirror scorbot_description's
 # kinematics YAML (VERIFY: placeholders from the SolidWorks export) with a
 # conservative acceleration. Keys are prefixed at launch when `prefix` is set.

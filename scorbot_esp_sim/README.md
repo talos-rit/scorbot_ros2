@@ -9,7 +9,7 @@ faults, calibration persistence, reboots. Two jobs:
    serial_port:=/tmp/scorbot` drives the simulator exactly as it will drive the ESP32,
    and the hardware interface's tests run against `ControllerSim` directly.
 2. **Reference for the firmware.** `test/test_controller_sim.cpp` is the list of
-   behaviours the firmware must reproduce, each with the timing that is expected.
+   behaviors the firmware must reproduce, each with the timing that is expected.
 
 ## Run it
 
@@ -49,7 +49,7 @@ While it runs, type on its stdin:
 - The limit switch trips at `home_offset_rad` when approached from `home_direction`
   and stays pressed for 0.02 rad past that edge, mid-range like the Scorbots'. Homing
   drives toward it at a quarter of the joint's maximum speed and zeroes the encoder on
-  the edge (reported positions are exactly absolute afterwards). Started on the wrong
+  the edge (reported positions are exactly absolute afterward). Started on the wrong
   side, it reverses once at the hard stop, drives through the switch and re-approaches
   from `home_direction` so the same edge is used; started on the switch, it backs off
   until the switch releases plus 0.02 rad and re-approaches at homing speed. It times out into

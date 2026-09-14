@@ -1,7 +1,7 @@
 # Kinematic and visual description of the Scorbot ER-4pc ("Bluey").
 #
 # Frames follow the conventions in scorbot_description/README.md:
-#   - base_link at the centre of the base mounting face, z up, x forward.
+#   - base_link at the center of the base mounting face, z up, x forward.
 #   - At the zero pose the arm points straight out along +x, horizontal.
 #   - Positive shoulder / elbow / wrist_pitch lifts the distal link (rotation about -y).
 #   - Positive wrist_roll is right-handed about +x (looking from the base toward the tool).

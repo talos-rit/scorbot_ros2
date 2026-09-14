@@ -1,5 +1,5 @@
 // State machine and physics conformance of the simulated controller. These are the
-// behaviours the firmware must reproduce (scorbot_protocol/docs/protocol.md).
+// behaviors the firmware must reproduce (scorbot_protocol/docs/protocol.md).
 
 #include <gtest/gtest.h>
 

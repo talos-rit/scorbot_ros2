@@ -139,7 +139,7 @@ TEST(AnalyticIk, UnreachableYawIsProjectedNotRejected)
   EXPECT_NEAR(sols.front().q[0], q[0], 1e-9);
 }
 
-TEST(AnalyticIk, PitchAndRollRequestsAreHonoured)
+TEST(AnalyticIk, PitchAndRollRequestsAreHonored)
 {
   const Geometry g = er4pc();
   std::array<double, kNumJoints> q{0.0, 0.3, -0.6, 0.3, 0.0};

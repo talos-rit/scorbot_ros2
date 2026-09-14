@@ -1,19 +1,24 @@
 # ros2_control configuration for one Scorbot arm.
+#
+# Joint names are unprefixed and node names are unqualified on purpose: robot.launch.py
+# rewrites this file per robot with the launch `prefix` and `name` (namespace) before
+# handing it to ros2_control_node and the spawners. See scorbot_bringup/controllers_config.py.
 
 controller_manager:
   ros__parameters:
-    update_rate: 100 # Hz, matches the ESP32 streaming rate in the design
+    update_rate: 100  # Hz, matches the ESP32 streaming rate in the design
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
-    
+
     joint_trajectory_controller:
       type: joint_trajectory_controller/JointTrajectoryController
-    
+
     forward_velocity_controller:
       type: velocity_controllers/JointGroupVelocityController
 
-    # Real hardware only
+    # Real hardware only (mock:=false): home / enable / disable / clear_fault services
+    # and the ~/status topic, through the hardware's "system" GPIO interfaces.
     system_controller:
       type: scorbot_system_controller/ScorbotSystemController
 
@@ -30,7 +35,7 @@ joint_state_broadcaster:
       - velocity
       - effort
 
-# Planned / point-to-point moves
+# Planned / point-to-point moves (MoveIt, rqt, demo_motion).
 joint_trajectory_controller:
   ros__parameters:
     joints:
@@ -52,7 +57,7 @@ joint_trajectory_controller:
       stopped_velocity_tolerance: 0.02
       goal_time: 0.5
 
-# Live tracking loop
+# Live tracking loop: the director streams joint velocities here.
 forward_velocity_controller:
   ros__parameters:
     joints:
@@ -62,7 +67,7 @@ forward_velocity_controller:
       - wrist_pitch_joint
       - wrist_roll_joint
 
-# ESP32 controller services
+# ESP32 controller services (spawned only with mock:=false).
 system_controller:
   ros__parameters:
     gpio_name: system

@@ -1,6 +1,6 @@
 // Transport decorator that drops or corrupts outgoing frames at configurable rates.
 // Lets the simulator (and hardware-interface tests) exercise CRC failures, sequence
-// gaps and resynchronisation without a flaky cable.
+// gaps and resynchronization without a flaky cable.
 
 #pragma once
 

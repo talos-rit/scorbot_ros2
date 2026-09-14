@@ -1,8 +1,14 @@
 """Rewrite the shared controllers YAML for one robot instance.
 
-`config/controllers.yaml` is written once with plain joint names and plain node names. 
-Each launched robot may live in its own namespace and use a link/joint prefix, so the file is 
-rewritten at launch time.
+`config/controllers.yaml` is written once with plain joint names and plain node
+names. Each launched robot may live in its own namespace and use a link/joint prefix
+(so two arms can share one TF tree), so the file is rewritten at launch time:
+
+- every top-level node key becomes fully qualified: ``/<namespace>/<node>``
+- every ``joints`` list under ``ros__parameters`` gets the prefix
+- ``gpio_name`` (the hardware's system GPIO, ``<prefix>system``) gets the prefix
+
+The rewritten file is what ``ros2_control_node`` and the spawners receive.
 """
 
 from __future__ import annotations
@@ -16,11 +22,13 @@ import yaml
 JOINT_LIST_KEYS = ("joints",)
 PREFIXED_NAME_KEYS = ("gpio_name",)
 
+
 def qualify(node: str, namespace: str) -> str:
-    """Return the fully qualified node name for `node` inside `namespace`."""
+    """Return the fully-qualified node name for `node` inside `namespace`."""
     ns = "/".join(part for part in namespace.split("/") if part)
     node = node.lstrip("/")
     return f"/{ns}/{node}" if ns else f"/{node}"
+
 
 def _prefix_joints(params: Any, prefix: str) -> Any:
     if isinstance(params, dict):
@@ -37,6 +45,7 @@ def _prefix_joints(params: Any, prefix: str) -> Any:
         return [_prefix_joints(v, prefix) for v in params]
     return params
 
+
 def rewrite_controllers(config: dict, prefix: str = "", namespace: str = "") -> dict:
     """Return a new config with qualified node names and prefixed joint names."""
     result = {}
@@ -44,8 +53,9 @@ def rewrite_controllers(config: dict, prefix: str = "", namespace: str = "") -> 
         result[qualify(node, namespace)] = _prefix_joints(body, prefix)
     return result
 
+
 def write_prefixed_controllers(
-        source: str, prefix: str = "", namespace: str = "", dest_dir: str | None = None
+    source: str, prefix: str = "", namespace: str = "", dest_dir: str | None = None
 ) -> str:
     """Rewrite `source` and return the path of the generated YAML file."""
     with open(source, encoding="utf-8") as f:

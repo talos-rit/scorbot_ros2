@@ -2,7 +2,7 @@
 //
 // Encodes a byte string so that it contains no 0x00 bytes, at a cost of one extra byte
 // per 254 input bytes. A 0x00 can then be used as a frame delimiter on a byte stream
-// and a receiver can always resynchronise on the next delimiter. Header-only, no
+// and a receiver can always resynchronize on the next delimiter. Header-only, no
 // allocation, usable from firmware and from the Pi.
 
 #pragma once

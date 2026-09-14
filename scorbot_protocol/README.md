@@ -13,10 +13,10 @@ The wire specification for firmware authors is **`docs/protocol.md`**.
 | `proto/scorbot/v1/scorbot.proto` | the message definitions (source of truth) |
 | `proto/scorbot/v1/scorbot.options` | nanopb sizes: fixed arrays (8 joints), fixed strings |
 | `generated/scorbot/v1/scorbot.pb.{h,c}` | nanopb output, **committed**; regenerate with `scripts/regenerate.sh` |
-| `third_party/nanopb/` | nanopb 0.4.9.1 runtime (zlib licence), vendored so both sides match |
+| `third_party/nanopb/` | nanopb 0.4.9.1 runtime (zlib license), vendored so both sides match |
 | `include/scorbot_protocol/cobs.hpp` | COBS encode/decode, header-only |
 | `include/scorbot_protocol/crc16.hpp` | CRC-16/CCITT-FALSE, header-only |
-| `include/scorbot_protocol/framing.hpp` | `encodeFrame`, `StreamDecoder` (resynchronising, no allocation) |
+| `include/scorbot_protocol/framing.hpp` | `encodeFrame`, `StreamDecoder` (resynchronizing, no allocation) |
 | `include/scorbot_protocol/messages.hpp` | encode/decode an `Envelope`, typed request builders, enum names |
 | `include/scorbot_protocol/transport.hpp` | `Transport` interface, `FdTransport`, `SerialTransport`, `TransportPair` |
 | `include/scorbot_protocol/link.hpp` | `Link`: envelopes over a transport, sequence numbers, stats, request/response |

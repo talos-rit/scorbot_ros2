@@ -1,4 +1,4 @@
-# Inverse kinematics with pick_ik (PickNik's optimisation-based solver).
+# Inverse kinematics with pick_ik (PickNik's optimization-based solver).
 #
 # Why not KDL: the arm has five joints, so it cannot reach an arbitrary 6-D pose. KDL
 # in position-only mode ignores the rotation rings entirely and, with five joints for

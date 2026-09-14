@@ -1,3 +1,29 @@
+"""Bring up one Scorbot arm under ros2_control.
+
+Virtual station (mock hardware, RViz):
+    ros2 launch scorbot_bringup robot.launch.py robot_type:=er_4pc
+    ros2 launch scorbot_bringup robot.launch.py robot_type:=er_v
+
+Real robot (ESP32 over serial through scorbot_hardware), or the ESP simulator:
+    ros2 launch scorbot_bringup robot.launch.py robot_type:=er_4pc mock:=false \
+        serial_port:=/dev/serial/by-id/usb-Silicon_Labs_CP2102-... rviz:=false
+    ros2 run scorbot_esp_sim scorbot_esp_sim --link /tmp/scorbot   # then
+    ros2 launch scorbot_bringup robot.launch.py mock:=false serial_port:=/tmp/scorbot
+
+What starts, all in the `name` namespace (root by default):
+    robot_state_publisher      publishes TF and the robot_description topic
+    ros2_control_node          controller_manager; reads robot_description from the topic
+    joint_state_broadcaster    active
+    joint_trajectory_controller active   (point-to-point moves, MoveIt, demo_motion)
+    forward_velocity_controller inactive (tracking loop; switch to it at runtime)
+    system_controller          active, mock:=false only (home/enable/disable/clear_fault
+                               services and ~/status; see scorbot_system_controller)
+    rviz2                      optional
+
+With mock:=false the joint controllers start but the ESP32 ignores their commands until
+it is homed and enabled: stop them, call system_controller/home and /enable, start them.
+"""
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.conditions import IfCondition
@@ -18,7 +44,8 @@ ARGUMENTS = [
     DeclareLaunchArgument(
         "name",
         default_value="",
-        description="Namespace for every node and topic. Empty (default) means the root namespace. Set it when two arms must share one network.",
+        description="Namespace for every node and topic. Empty (default) means the root "
+        "namespace. Set it when two arms must share one network.",
     ),
     DeclareLaunchArgument(
         "prefix",
@@ -46,25 +73,27 @@ ARGUMENTS = [
         "auto_home",
         default_value="false",
         choices=["true", "false"],
-        description="home the controller during hardware activation if it is not homed yet.",
+        description="mock:=false only: home the controller during hardware activation "
+        "if it is not homed yet (blocks bringup for the homing time).",
     ),
     DeclareLaunchArgument(
         "allow_unhomed",
         default_value="false",
         choices=["true", "false"],
-        description="enable the drives without homing",
+        description="mock:=false only, bench use: enable the drives without homing "
+        "(no soft limits, positions relative to power-up).",
     ),
     DeclareLaunchArgument(
         "controllers_file",
         default_value=PathJoinSubstitution(
             [FindPackageShare("scorbot_bringup"), "config", "controllers.yaml"]
         ),
-        description="ros2_control controllers YAML.",
+        description="ros2_control controllers YAML (rewritten per name/prefix at launch).",
     ),
     DeclareLaunchArgument(
         "world_frame",
         default_value="world",
-        description="Fixed frame the base is attached to, empty makes base_link the root.",
+        description="Fixed frame the base is attached to. Empty makes base_link the root.",
     ),
     DeclareLaunchArgument("x", default_value="0.0", description="Base position in world_frame."),
     DeclareLaunchArgument("y", default_value="0.0", description="Base position in world_frame."),
@@ -90,10 +119,11 @@ ARGUMENTS = [
     ),
 ]
 
+
 def launch_setup(context, *args, **kwargs):
     cfg = {name: LaunchConfiguration(name).perform(context) for name in [
-        "robot_type", "name", "prefix", "mock", "serial_port", "calibration_file", 
-        "auto_home", "allow_unhomed", 
+        "robot_type", "name", "prefix", "mock", "serial_port", "calibration_file",
+        "auto_home", "allow_unhomed",
         "controllers_file", "world_frame", "x", "y", "z", "yaw", "rviz", "rviz_config",
         "controller_manager_timeout",
     ]}
@@ -159,7 +189,8 @@ def launch_setup(context, *args, **kwargs):
             parameters=[robot_description],
             output="screen",
         ),
-        # controller_manager takes robot_description from thetopic published above
+        # controller_manager takes robot_description from the topic published above
+        # (same namespace), which is the Jazzy-recommended path.
         Node(
             package="controller_manager",
             executable="ros2_control_node",
@@ -180,12 +211,11 @@ def launch_setup(context, *args, **kwargs):
             condition=IfCondition(cfg["rviz"]),
         ),
     ]
-
     if cfg["mock"] == "false":
         # The system GPIO only exists on the real hardware interface.
         nodes.append(spawner("system_controller"))
-
     return nodes
+
 
 def generate_launch_description():
     return LaunchDescription(ARGUMENTS + [OpaqueFunction(function=launch_setup)])

@@ -1,4 +1,4 @@
-// The hardware interface's behaviour, driven the way ros2_control drives ScorbotSystem
+// The hardware interface's behavior, driven the way ros2_control drives ScorbotSystem
 // (configure / activate / read / write / mode switches / GPIO pulses), against the
 // simulated controller. These are the tests the design doc's section 11 asks for.
 

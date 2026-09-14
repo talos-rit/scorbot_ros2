@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-"""Drive the arm through a slow sequence of poses via the joint_trajectory_controller
+"""Drive the arm through a slow sequence of poses via joint_trajectory_controller.
 
-Initial test for the virtual station and the first thing to run on a 
-robot once homing had been completed.
+Smoke test for the virtual station and the first thing to run on a real robot after
+homing: if this moves the arm in RViz, the description, controller manager, hardware
+(or mock) and trajectory controller are all working together.
+
+    ros2 run scorbot_bringup demo_motion
+    ros2 run scorbot_bringup demo_motion --namespace bluey --prefix bluey_ --loops 3
+    ros2 run scorbot_bringup demo_motion --scale 0.5 --segment-time 4.0
 """
 
 import argparse
@@ -24,7 +29,7 @@ JOINTS = [
     "wrist_roll_joint",
 ]
 
-# Waypoints in degrees, well inside each joint limit, ends back at zero.
+# Waypoints in degrees, well inside every joint limit. Ends back at zero.
 WAYPOINTS_DEG = [
     [0, 0, 0, 0, 0],
     [40, 30, -40, 20, 0],
@@ -33,6 +38,7 @@ WAYPOINTS_DEG = [
     [-40, 20, -20, 0, 0],
     [0, 0, 0, 0, 0],
 ]
+
 
 def build_trajectory(prefix: str, scale: float, segment_time: float) -> JointTrajectory:
     traj = JointTrajectory()
@@ -46,6 +52,7 @@ def build_trajectory(prefix: str, scale: float, segment_time: float) -> JointTra
         point.time_from_start = Duration(seconds=t).to_msg()
         traj.points.append(point)
     return traj
+
 
 class DemoMotion(Node):
     def __init__(self, namespace: str):
@@ -76,6 +83,7 @@ class DemoMotion(Node):
             return False
         self.get_logger().info("Trajectory completed")
         return True
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])

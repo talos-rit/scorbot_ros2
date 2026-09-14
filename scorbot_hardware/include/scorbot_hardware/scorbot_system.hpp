@@ -1,5 +1,5 @@
 // ScorbotSystem: ros2_control SystemInterface for the ESP32 Scorbot controller. A thin
-// adapter over scorbot_hardware::Session (which holds all behaviour and is tested
+// adapter over scorbot_hardware::Session (which holds all behavior and is tested
 // without ROS). Design: project_documentation/technical/ros2/ros2_architecture.md, 5.5 and 6.
 
 #pragma once
